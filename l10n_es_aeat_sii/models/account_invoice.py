@@ -34,8 +34,9 @@ SII_STATES = [
     ('cancelled_modified', 'Cancelled in SII but last modifications not sent'),
 ]
 
-SII_VERSION = '1.0'
+SII_VERSION = '1.1'
 SII_START_DATE = '2017-07-01'
+SII_MACRODATA_LIMIT = 100000000
 
 
 class AccountInvoice(osv.Model):
@@ -110,6 +111,7 @@ class AccountInvoice(osv.Model):
                  "presentation at the SII",
         ),
         'sii_sent': fields.boolean(string='SII Sent'),
+        'sii_macrodata': fields.boolean(string='MacroData'),
         'sii_return': fields.text(string='SII Return'),
         'sii_send_error': fields.text(
             string='SII Send Error', readonly=True,
@@ -406,12 +408,14 @@ class AccountInvoice(osv.Model):
                     # corrientes nacionales
                     ex_taxes = taxes_sfesbe
                     if tax_line in ex_taxes:
-                        sub_dict.setdefault('Exenta', {'BaseImponible': 0})
+                        sub_dict.setdefault('Exenta', {'DetalleExenta': []})
+
+                        det_dict = {'BaseImponible':
+                                        inv_line_obj._get_sii_line_price_subtotal(cr, uid, inv_line) * sign}
+
                         if exempt_cause:
-                            sub_dict['Exenta']['CausaExencion'] = exempt_cause
-                        sub_dict['Exenta']['BaseImponible'] += (
-                            inv_line_obj._get_sii_line_price_subtotal(cr, uid, inv_line) * sign
-                        )
+                            det_dict['CausaExencion'] = exempt_cause
+                        sub_dict['Exenta']['DetalleExenta'].append(det_dict)
                     else:
                         sub_dict.setdefault('NoExenta', {
                             'TipoNoExenta': (
@@ -436,13 +440,17 @@ class AccountInvoice(osv.Model):
                     )
                     service_dict = type_breakdown['PrestacionServicios']
                     if tax_line in taxes_sfesse:
-                        exempt_dict = service_dict['Sujeta'].setdefault(
-                            'Exenta', {'BaseImponible': 0},
+                        service_dict = service_dict['Sujeta'].setdefault(
+                            'Exenta', {'DetalleExenta': []},
                         )
+
+                        det_dict = {'BaseImponible':
+                                        inv_line_obj._get_sii_line_price_subtotal(cr, uid, inv_line) * sign}
+
                         if exempt_cause:
-                            exempt_dict['CausaExencion'] = exempt_cause
-                        exempt_dict['BaseImponible'] += inv_line_obj._get_sii_line_price_subtotal(cr, uid,
-                                                                                                  inv_line) * sign
+                            det_dict['CausaExencion'] = exempt_cause
+                        service_dict['Exenta']['DetalleExenta'].append(det_dict)
+
                     # TODO Facturas no sujetas
                     if tax_line in taxes_sfess:
                         # TODO l10n_es_ no tiene impuesto ISP de servicios
@@ -575,7 +583,7 @@ class AccountInvoice(osv.Model):
     def _get_account_registration_date(self, cr, uid, invoice):
         """Hook method to allow the setting of the account registration date
         of each supplier invoice. The SII recommends to set the send date as
-        the default value (point 9.3 of the document
+        the default value (point 9.3 of the /document
         SII_Descripcion_ServicioWeb_v0.7.pdf), so by default we return
         the current date
         :return String date in the format %Y-%m-%d"""
@@ -619,7 +627,7 @@ class AccountInvoice(osv.Model):
                                          )[0:60],
                 "FechaExpedicionFacturaEmisor": invoice_date,
             },
-            "PeriodoImpositivo": {
+            "PeriodoLiquidacion": {
                 "Ejercicio": ejercicio,
                 "Periodo": periodo,
             },
@@ -643,6 +651,9 @@ class AccountInvoice(osv.Model):
                 "TipoDesglose": self._get_sii_out_taxes(cr, uid, invoice),
                 "ImporteTotal": invoice.amount_total * sign,
             }
+
+            if invoice.sii_macrodata:
+                inv_dict["Macrodato"] = "S"
 
             if invoice.sii_registration_key.code in ['12', '13']:
                 inv_dict["FacturaExpedida"]['DatosInmueble'] = {
@@ -704,7 +715,7 @@ class AccountInvoice(osv.Model):
                 "IDEmisorFactura": {},
                 "NumSerieFacturaEmisor": (invoice.reference or '')[0:60],
                 "FechaExpedicionFacturaEmisor": invoice_date},
-            "PeriodoImpositivo": {
+            "PeriodoLiquidacion": {
                 "Ejercicio": ejercicio,
                 "Periodo": periodo
             },
@@ -739,6 +750,10 @@ class AccountInvoice(osv.Model):
             }
 
             # Uso condicional de IDOtro/NIF
+
+            if invoice.sii_macrodata:
+                inv_dict["Macrodato"] = "S"
+
             inv_dict['IDFactura']['IDEmisorFactura'].update(ident)
             inv_dict['FacturaRecibida']['Contraparte'].update(ident)
             if invoice.type == 'in_refund':

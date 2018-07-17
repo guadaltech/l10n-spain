@@ -34,6 +34,7 @@
                             <field name="sii_refund_type"
                                    on_change="onchange_refund_type_l10n_es_aeat_sii(refund_type)"/>
                             <field name="sii_registration_key" domain="[('type', '=', 'purchase')]"/>
+                            <field name="sii_macrodata"/>
                             <field name="sii_enabled"/>
                         </group>
                         <group string="SII Result">
@@ -99,6 +100,7 @@
                                    attrs="{'invisible': [('sii_registration_key_code', 'not in', ['12', '13'])],
                                            'required': [('sii_registration_key_code', 'in', ['12', '13']),
                                            ('sii_property_location', 'in', ['1', '2'])]}"/>
+                            <field name="sii_macrodata"/>
 
                         </group>
                         <group string="SII Result">

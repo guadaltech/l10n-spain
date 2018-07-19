@@ -408,14 +408,14 @@ class AccountInvoice(osv.Model):
                     # corrientes nacionales
                     ex_taxes = taxes_sfesbe
                     if tax_line in ex_taxes:
-                        sub_dict.setdefault('Exenta', {'DetalleExenta': []})
+                        sub_dict = sub_dict.setdefault('Exenta', {'DetalleExenta': []})
 
                         det_dict = {'BaseImponible':
                                         inv_line_obj._get_sii_line_price_subtotal(cr, uid, inv_line) * sign}
 
                         if exempt_cause:
                             det_dict['CausaExencion'] = exempt_cause
-                        sub_dict['Exenta']['DetalleExenta'].append(det_dict)
+                        sub_dict['DetalleExenta'].append(det_dict)
                     else:
                         sub_dict.setdefault('NoExenta', {
                             'TipoNoExenta': (
@@ -449,7 +449,7 @@ class AccountInvoice(osv.Model):
 
                         if exempt_cause:
                             det_dict['CausaExencion'] = exempt_cause
-                        service_dict['Exenta']['DetalleExenta'].append(det_dict)
+                        service_dict['DetalleExenta'].append(det_dict)
 
                     # TODO Facturas no sujetas
                     if tax_line in taxes_sfess:

@@ -408,14 +408,18 @@ class AccountInvoice(osv.Model):
                     # corrientes nacionales
                     ex_taxes = taxes_sfesbe
                     if tax_line in ex_taxes:
-                        sub_dict = sub_dict.setdefault('Exenta', {'DetalleExenta': []})
 
-                        det_dict = {'BaseImponible':
-                                        inv_line_obj._get_sii_line_price_subtotal(cr, uid, inv_line) * sign}
-
+                        exempt_dict = sub_dict.setdefault(
+                            'Exenta', {'DetalleExenta': [{'BaseImponible': 0}]},
+                        )
+                        det_dict = exempt_dict['DetalleExenta'][0]
                         if exempt_cause:
                             det_dict['CausaExencion'] = exempt_cause
-                        sub_dict['DetalleExenta'].append(det_dict)
+                        det_dict['BaseImponible'] += float_round(inv_line.quantity *\
+                                inv_line_obj._get_sii_line_price_subtotal(cr,
+                                                                          uid,
+                                                                          inv_line) * sign,2)
+
                     else:
                         sub_dict.setdefault('NoExenta', {
                             'TipoNoExenta': (
@@ -440,16 +444,18 @@ class AccountInvoice(osv.Model):
                     )
                     service_dict = type_breakdown['PrestacionServicios']
                     if tax_line in taxes_sfesse:
-                        service_dict = service_dict['Sujeta'].setdefault(
-                            'Exenta', {'DetalleExenta': []},
+
+
+                        service_dict = service_dict.setdefault(
+                            'Exenta', {'DetalleExenta': [{'BaseImponible': 0}]},
                         )
-
-                        det_dict = {'BaseImponible':
-                                        inv_line_obj._get_sii_line_price_subtotal(cr, uid, inv_line) * sign}
-
+                        det_dict = service_dict['DetalleExenta'][0]
                         if exempt_cause:
                             det_dict['CausaExencion'] = exempt_cause
-                        service_dict['DetalleExenta'].append(det_dict)
+                        det_dict['BaseImponible'] += float_round(inv_line.quantity *\
+                                inv_line_obj._get_sii_line_price_subtotal(cr,
+                                                                          uid,
+                                                                          inv_line) * sign,2)
 
                     # TODO Facturas no sujetas
                     if tax_line in taxes_sfess:

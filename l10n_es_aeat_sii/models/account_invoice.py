@@ -444,10 +444,10 @@ class AccountInvoice(osv.Model):
                     )
                     service_dict = type_breakdown['PrestacionServicios']
                     if tax_line in taxes_sfesse:
-                        service_dict = service_dict['Sujeta'].setdefault(
+                        exempt_dict = service_dict['Sujeta'].setdefault(
                             'Exenta', {'DetalleExenta': [{'BaseImponible': 0}]},
                         )
-                        det_dict = service_dict['DetalleExenta'][0]
+                        det_dict = exempt_dict['DetalleExenta'][0]
                         if exempt_cause:
                             det_dict['CausaExencion'] = exempt_cause
                         det_dict['BaseImponible'] += float_round(inv_line.quantity *\

@@ -444,9 +444,7 @@ class AccountInvoice(osv.Model):
                     )
                     service_dict = type_breakdown['PrestacionServicios']
                     if tax_line in taxes_sfesse:
-
-
-                        service_dict = service_dict.setdefault(
+                        service_dict = service_dict['Sujeta'].setdefault(
                             'Exenta', {'DetalleExenta': [{'BaseImponible': 0}]},
                         )
                         det_dict = service_dict['DetalleExenta'][0]

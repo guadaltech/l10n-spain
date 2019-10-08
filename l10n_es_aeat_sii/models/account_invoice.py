@@ -911,7 +911,8 @@ class AccountInvoice(osv.Model):
                     'sii_send_failed': True,
                     'sii_send_error': fault,
                     'sii_return': fault,
-                })
+		    'sii_content_sent':json.dumps(inv_dict, indent=4),
+		})
 
                 new_cr.commit()
                 new_cr.close()

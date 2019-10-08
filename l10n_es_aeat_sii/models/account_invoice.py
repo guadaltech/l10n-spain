@@ -415,10 +415,7 @@ class AccountInvoice(osv.Model):
                         det_dict = exempt_dict['DetalleExenta'][0]
                         if exempt_cause:
                             det_dict['CausaExencion'] = exempt_cause
-                        det_dict['BaseImponible'] += float_round(inv_line.quantity *\
-                                inv_line_obj._get_sii_line_price_subtotal(cr,
-                                                                          uid,
-                                                                          inv_line) * sign,2)
+                        det_dict['BaseImponible'] += float_round(inv_line.quantity * inv_line_obj._get_sii_line_price_subtotal(cr, uid, inv_line) * sign,2)
 
                     else:
                         sub_dict.setdefault('NoExenta', {
@@ -450,10 +447,7 @@ class AccountInvoice(osv.Model):
                         det_dict = exempt_dict['DetalleExenta'][0]
                         if exempt_cause:
                             det_dict['CausaExencion'] = exempt_cause
-                        det_dict['BaseImponible'] += float_round(inv_line.quantity *\
-                                inv_line_obj._get_sii_line_price_subtotal(cr,
-                                                                          uid,
-                                                                          inv_line) * sign,2)
+                        det_dict['BaseImponible'] += float_round(inv_line.quantity * inv_line_obj._get_sii_line_price_subtotal(cr, uid, inv_line) * sign,2)
 
                     # TODO Facturas no sujetas
                     if tax_line in taxes_sfess:
@@ -518,6 +512,8 @@ class AccountInvoice(osv.Model):
         taxes_sfrns = self._get_sii_taxes_map(cr, uid,
                                               ['SFRNS'], invoice)
         tax_amount = 0.0
+        # Check if refund type is 'By differences'. Negative amounts!
+        sign = -1.0 if invoice.sii_refund_type == 'I' else 1.0
         for inv_line in invoice.invoice_line:
             for tax_line in inv_line.invoice_line_tax_id:
                 if tax_line in taxes_sfrisp:
@@ -529,8 +525,7 @@ class AccountInvoice(osv.Model):
                         'DesgloseIVA',
                         {'DetalleIVA': {'BaseImponible': 0}},
                     )
-                    nsub_dict['DetalleIVA']['BaseImponible'] += \
-                        inv_line_obj._get_sii_line_price_subtotal(cr, uid, inv_line) * sign
+                    nsub_dict['DetalleIVA']['BaseImponible'] += float_round(inv_line_obj._get_sii_line_price_subtotal(cr, uid, inv_line) * sign,2)
 
         if taxes_isp:
             taxes_dict.setdefault(
@@ -540,8 +535,7 @@ class AccountInvoice(osv.Model):
             taxes_dict.setdefault(
                 'DesgloseIVA', {'DetalleIVA': taxes_f.values()},
             )
-        # Check if refund type is 'By differences'. Negative amounts!
-        sign = -1.0 if invoice.sii_refund_type == 'I' else 1.0
+
         for val in taxes_isp.values() + taxes_f.values():
             val['CuotaSoportada'] = float_round(
                 val['CuotaSoportada'] * sign, 2,
@@ -1210,7 +1204,7 @@ class AccountInvoiceLine(osv.Model):
                                                          line.quantity,
                                                          line.product_id, line.invoice_id.partner_id,
                                                          )
-        tax_dict[tax_type]['BaseImponible'] += taxes['total']
+        tax_dict[tax_type]['BaseImponible'] += float_round(taxes['total'],2)
         if line.invoice_id.type in ['out_invoice', 'out_refund']:
             key = 'CuotaRepercutida'
         else:

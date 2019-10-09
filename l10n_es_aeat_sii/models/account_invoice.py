@@ -819,6 +819,7 @@ class AccountInvoice(osv.Model):
         return client
 
     def _send_invoice_to_sii(self, cr, uid, ids):
+        tax_obj = self.pool.get('account.tax')
         for invoice in self.pool.get('account.invoice').browse(cr, uid, ids):
             company = invoice.company_id
             port_name = ''
@@ -845,10 +846,24 @@ class AccountInvoice(osv.Model):
                 tipo_comunicacion = 'A1'
 
             header = self._get_sii_header(cr, uid, invoice.id, company, tipo_comunicacion)
+            sign = -1.0 if invoice.sii_refund_type == 'I' else 1.0
             inv_vals = {
                 'sii_header_sent': json.dumps(header, indent=4),
             }
             inv_dict = self._get_sii_invoice_dict(cr, uid, invoice)
+            if inv_dict.has_key('FacturaRecibida'):
+                cuota_deducible = 0.0
+                for invoice_line in invoice.tax_line:
+                    if invoice_line.tax_code_id:
+                        for line in inv_dict['FacturaRecibida']['DesgloseFactura']['DesgloseIVA']['DetalleIVA']:
+                            tax_id = tax_obj.search(cr, uid, [('tax_code_id','=',invoice_line.tax_code_id.id)],limit=1)
+                            if tax_id:
+                                amount = tax_obj.browse(cr, uid, tax_id)[0].amount * 100
+                                if float(line['TipoImpositivo']) == amount:
+                                    line['CuotaSoportada'] = float_round(invoice_line.amount * sign, 2)
+                                    cuota_deducible = cuota_deducible + invoice_line.amount
+                                    break;
+                inv_dict['FacturaRecibida']['CuotaDeducible'] = float_round(cuota_deducible * sign,2)
             inv_vals['sii_content_sent'] = json.dumps(inv_dict, indent=4)
             try:
                 if invoice.type in ['out_invoice', 'out_refund']:
@@ -869,7 +884,7 @@ class AccountInvoice(osv.Model):
                         'sii_send_failed': True,
                     })
 
-                self.write(cr, uid, invoice.id, {'sii_return': res})
+                self.write(cr, uid, invoice.id, {'sii_return': res, 'sii_content_sent': json.dumps(inv_dict, indent=4)})
 
                 send_error = False
                 res_line = res['RespuestaLinea'][0]

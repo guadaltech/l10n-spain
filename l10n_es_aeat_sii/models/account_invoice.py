@@ -890,7 +890,7 @@ class AccountInvoice(osv.Model):
                 elif res['EstadoEnvio'] == 'ParcialmenteCorrecto' and \
                                 res_line['EstadoRegistro'] == 'AceptadoConErrores':
                     inv_vals.update({
-                        'sii_state': 'sent_w_errors',
+                        'sii_state': 'sent_modified',
                         'sii_csv': res['CSV'],
                         'sii_send_failed': True,
                     })

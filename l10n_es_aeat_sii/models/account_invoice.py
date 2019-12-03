@@ -851,7 +851,7 @@ class AccountInvoice(osv.Model):
                 'sii_header_sent': json.dumps(header, indent=4),
             }
             inv_dict = self._get_sii_invoice_dict(cr, uid, invoice)
-            if inv_dict.has_key('FacturaRecibida'):
+            if inv_dict.has_key('FacturaRecibida') and inv_dict['FacturaRecibida'].has_key('DesgloseFactura') and inv_dict['FacturaRecibida']['DesgloseFactura'].has_key('DesgloseIVA'):
                 cuota_deducible = 0.0
                 for invoice_line in invoice.tax_line:
                     if invoice_line.tax_code_id:

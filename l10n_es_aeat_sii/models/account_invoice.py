@@ -634,7 +634,7 @@ class AccountInvoice(osv.Model):
 	
 	not_in_total = invoice.amount_untaxed
         for tax_line in invoice.tax_line:
-            if 'Retencion' not in tax_line.name.lower():
+            if 'retencion' not in tax_line.name.lower():
                 not_in_total += tax_line.amount
         amount_total = invoice.amount_total
 
@@ -742,7 +742,7 @@ class AccountInvoice(osv.Model):
 
             not_in_total = invoice.amount_untaxed
             for tax_line in invoice.tax_line:
-                if 'Retencion' not in tax_line.name.lower():
+                if 'retencion' not in tax_line.name.lower():
                     not_in_total += tax_line.amount
             amount_total = invoice.amount_total
 

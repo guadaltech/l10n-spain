@@ -630,6 +630,15 @@ class AccountInvoice(osv.Model):
                 "Periodo": periodo,
             },
         }
+	
+	not_in_total = invoice.amount_untaxed
+        for tax_line in invoice.tax_line:
+            if 'Retencion' not in tax_line.name:
+                not_in_total += tax_line.amount
+        amount_total = invoice.amount_total
+
+        if abs(amount_total - not_in_total) > 0.1:
+            amount_total = not_in_total
 
         if not cancel:
             # Check if refund type is 'By differences'. Negative amounts!
@@ -728,6 +737,17 @@ class AccountInvoice(osv.Model):
 
         else:
             # Check if refund type is 'By differences'. Negative amounts!
+	    # this is patch to include RET in amount_total
+
+            not_in_total = invoice.amount_untaxed
+            for tax_line in invoice.tax_line:
+                if 'Retencion' not in tax_line.name:
+                    not_in_total += tax_line.amount
+            amount_total = invoice.amount_total
+
+            if abs(amount_total - not_in_total) > 0.1:
+                amount_total = not_in_total
+
             sign = -1.0 if invoice.sii_refund_type == 'I' else 1.0
             inv_dict["FacturaRecibida"] = {
                 # TODO: Incluir los 5 tipos de facturas rectificativas
@@ -743,7 +763,7 @@ class AccountInvoice(osv.Model):
                     "NombreRazon": invoice.partner_id.name[0:120],
                 },
                 "FechaRegContable": reg_date,
-                "ImporteTotal": invoice.amount_total * sign,
+                "ImporteTotal": amount_total * sign,
                 "CuotaDeducible": float_round(tax_amount * sign, 2),
             }
 

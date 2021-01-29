@@ -656,7 +656,7 @@ class AccountInvoice(osv.Model):
                 #     "NombreRazon": invoice.partner_id.name[0:120],
                 # },
                 "TipoDesglose": self._get_sii_out_taxes(cr, uid, invoice),
-                "ImporteTotal": invoice.amount_total * sign,
+                "ImporteTotal": amount_total * sign,
             }
 
             if invoice.sii_macrodata:

@@ -32,6 +32,7 @@ SII_STATES = [
     ('sent_modified', 'Registered in SII but last modifications not sent'),
     ('cancelled', 'Cancelled'),
     ('cancelled_modified', 'Cancelled in SII but last modifications not sent'),
+    ('sent_w_errors','Enviada con Errores')
 ]
 
 SII_VERSION = '1.1'
